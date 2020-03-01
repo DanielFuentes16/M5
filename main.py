@@ -5,9 +5,9 @@ from MLP import MLP
 from torchvision import transforms
 import torchvision
 from utils import class_plot
+import numpy as np
 
 debug = False
-
 
 def main():
     # Device configuration
@@ -19,6 +19,12 @@ def main():
     batch_size = 32
     learning_rate = 0.01
     momentum = 0.0
+
+    # Arrays for results
+    train_acc = np.zeros(num_epochs)
+    train_loss = np.zeros(num_epochs)
+    test_acc = np.zeros(num_epochs)
+    test_loss = np.zeros(num_epochs)
 
     # Datasets
     TRAIN_DATA_PATH = "./datasets/MIT_split/train"
@@ -48,6 +54,7 @@ def main():
     # Train the model
     total_step = len(train_loader)
     for epoch in range(num_epochs):
+        correct = 0
         for i, (images, labels) in enumerate(train_loader):
             # Move tensors to the configured device
             images = images.to(device)
@@ -63,30 +70,36 @@ def main():
             optimizer.step()
 
             # Accuracy
-            outputs = (outputs > 0.5).float()
-            correct = (outputs == labels[:8]).float().sum()
+            _, outputs = torch.max(outputs.data, 1)
+            correct += (outputs == labels).sum().item()
 
-            # if (i+1) % 100 == 0:
-            print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Acc: {:.4f}'.format(epoch + 1, num_epochs, i + 1,
-                                                                                  total_step,
-                                                                                  loss.item(),
-                                                                                  correct / outputs.shape[0]))
+        accuracy = correct / outputs.shape[0]
+        train_acc[epoch] = accuracy
+        train_loss[epoch] = loss.item()
+        print('Training: Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Acc: {:.4f}'.format(epoch + 1, num_epochs, i + 1, total_step,
+                                                                          loss.item(), accuracy))
 
-    # Test the model
-    # In test phase, we don't need to compute gradients (for memory efficiency)
-    with torch.no_grad():
-        correct = 0
-        total = 0
-        for images, labels in test_loader:
-            images = images.to(device)
-            labels = labels.to(device)
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+        # Test the model
+        # In test phase, we don't need to compute gradients (for memory efficiency)
+        with torch.no_grad():
+            correct = 0
+            total = 0
+            for images, labels in test_loader:
+                images = images.to(device)
+                labels = labels.to(device)
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                _, predicted = torch.max(outputs.data, 1)
+                total += labels.size(0)
+                correct += (predicted == labels).sum().item()
 
-        print('Accuracy of the network on the 10000 test images: {} %'.format(100 * correct / total))
-
+            accuracy = correct / outputs.shape[0]
+            test_acc[epoch] = accuracy
+            test_loss[epoch] = loss.item()
+            print('Training: Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Acc: {:.4f}'.format(epoch + 1, num_epochs, i + 1,
+                                                                                            total_step,
+                                                                                            loss.item(),
+                                                                                            accuracy))
     # Save the model checkpoint
     torch.save(model.state_dict(), 'model.ckpt')
 
