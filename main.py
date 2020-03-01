@@ -73,11 +73,11 @@ def main():
             _, outputs = torch.max(outputs.data, 1)
             correct += (outputs == labels).sum().item()
 
-        accuracy = correct / outputs.shape[0]
+        accuracy = correct / len(train_data) * 100
         train_acc[epoch] = accuracy
         train_loss[epoch] = loss.item()
         print('Training: Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Acc: {:.4f}'.format(epoch + 1, num_epochs, i + 1, total_step,
-                                                                          loss.item(), accuracy))
+                                                                          loss.item(), accuracy), flush=True)
 
         # Test the model
         # In test phase, we don't need to compute gradients (for memory efficiency)
@@ -93,13 +93,13 @@ def main():
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
-            accuracy = correct / outputs.shape[0]
+            accuracy = correct / len(test_data) * 100
             test_acc[epoch] = accuracy
             test_loss[epoch] = loss.item()
-            print('Training: Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Acc: {:.4f}'.format(epoch + 1, num_epochs, i + 1,
+            print('Test: Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Acc: {:.4f}'.format(epoch + 1, num_epochs, i + 1,
                                                                                             total_step,
                                                                                             loss.item(),
-                                                                                            accuracy))
+                                                                                            accuracy), flush=True)
     # Save the model checkpoint
     torch.save(model.state_dict(), 'model.ckpt')
 
