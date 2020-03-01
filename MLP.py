@@ -29,7 +29,7 @@ class MLP(torch.nn.Module):
         self.batch = torch.nn.BatchNorm1d(128)
         self.fc2 = torch.nn.Linear(128, 8)
         self.act = torch.nn.ReLU()
-        self.soft = torch.nn.Softmax()
+        self.soft = torch.nn.Softmax(dim=1)
 
     def forward(self, x):
         """Build an actor (policy) network that maps states -> actions."""
@@ -43,6 +43,7 @@ class MLP(torch.nn.Module):
         out = self.act(out)
         out = self.drop_out(out)
         out = self.fc2(out)
+        out = self.soft(out)
 
         # [batch_size, 8]
         return out
