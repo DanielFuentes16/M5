@@ -6,6 +6,7 @@ from torchvision import transforms
 import torchvision
 from utils import class_plot
 import numpy as np
+import matplotlib.pyplot as plt
 
 debug = False
 
@@ -103,6 +104,23 @@ def main():
     # Save the model checkpoint
     torch.save(model.state_dict(), 'model.ckpt')
 
+    # summarize history for accuracy
+    plt.plot(train_acc)
+    plt.plot(test_acc)
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.savefig('accuracy.jpg')
+    plt.close()
+    # summarize history for loss
+    plt.plot(train_loss)
+    plt.plot(test_loss)
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.savefig('loss.jpg')
 
 if __name__ == "__main__":
     main()
