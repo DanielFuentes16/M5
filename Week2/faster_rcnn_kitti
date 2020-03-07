@@ -1,0 +1,114 @@
+import os
+import glob 
+import cv2
+import numpy as np
+import argparse
+from detectron2.config import get_cfg
+import torch
+import random
+import cv2
+from detectron2.data import DatasetCatalog, MetadataCatalog
+from detectron2.structures import BoxMode
+from detectron2 import model_zoo
+
+ap = argparse.ArgumentParser()
+ap.add_argument("-name", "--experiment_comment", required = True, help="Comments for the experiment")
+
+args = vars(ap.parse_args())
+
+dir_name = args['experiment_comment']
+categories = {
+    'Car': 0,
+    'Van': 1,
+    'Truck': 2,
+    'Pedestrian': 3,
+    'Person_sitting': 4,
+    'Cyclist': 5,
+    'Tram': 6,
+    'Misc': 7,
+    'DontCare': 8
+    }
+image_dir='/Users/kaiali/Downloads/M5/mcv/datasets/KITTI/data_object_image_2/training/image_2'
+label_dir='/Users/kaiali/Downloads/M5/mcv/datasets/KITTI/training/label_2'
+image_path = glob.glob(image_dir+ '/*.png')
+label_path = glob.glob(label_dir + '/*.txt')
+label_file = sorted(label_path)
+image_file = sorted(image_path)
+
+# write a function that loads the dataset into detectron2's standard format
+def get_KITTI_dicts(image_dir):
+    
+     #obtain
+    for file in image_file :
+        splitd = file.split(os.sep)
+        img_name = splitd[-1]
+        img_id = img_name.split('.')[0]
+        label_file.append(label_dir + img_id + '.txt')
+
+    dataset_dicts = []
+    
+    #iteration
+    for i in range(0,len(label_file)):
+        record = {}
+        height, width = cv2.imread(image_file[i]).shape[:2]
+        record["file_name"] = image_file[i]
+        record["image_id"] = i
+        record["height"] = height
+        record["width"] = width
+
+        objs = []
+        with open(label_file[i]) as f:
+            lines = f.readlines()   
+        for line in lines:
+            col = line.split()
+            catg = categories[col[0]]
+            obj = {
+                "bbox": [col[4], col[5], col[6], col[7]],
+                "bbox_mode": BoxMode.XYXY_ABS,
+                "category_id": catg
+            }
+            objs.append(obj)
+        record["annotations"] = objs
+        dataset_dicts.append(record)
+    return(dataset_dicts)
+
+from detectron2.data import DatasetCatalog, MetadataCatalog
+
+for d in ["train", "test"]:
+    DatasetCatalog.register("kitti_data/" + d, lambda d=d: get_KITTI_dicts(image_dir))
+    MetadataCatalog.get('kitti_data/' + d).set(classes=categories)
+
+duckietown_metadata = MetadataCatalog.get('kitti_data/train')
+
+# print("data loading")
+# dataset_dicts = get_duckietown_dicts(root_dir)
+
+
+from detectron2.engine import DefaultTrainer
+from detectron2.config import get_cfg
+
+cfg = get_cfg()
+cfg.merge_from_file(model_zoo.get_config_file("COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml"))
+cfg.DATASETS.TRAIN = ("kitti_data/train",)
+cfg.DATASETS.TEST = ("kitti_data/train",)
+cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-Detection/faster_rcnn_X_101_32x8d_FPN_3x.yaml") 
+cfg.DATALOADER.NUM_WORKERS = 2
+# cfg.MODEL.WEIGHTS = root_dir + 'model_final.pkl'  # initialize from model zoo
+# cfg.MODEL.WEIGHTS = "/network/tmp1/bhattdha/detectron2_kitti/model_0014999.pth"  # initialize fron deterministic model
+cfg.SOLVER.IMS_PER_BATCH = 12
+cfg.SOLVER.BASE_LR = 0.015
+# cfg.SOLVER.BASE_LR = 0.0003  
+cfg.SOLVER.MAX_ITER =  15000  
+cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128   # faster, and good enough for this toy dataset
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = len(categories)  #  (kitti)
+cfg.OUTPUT_DIR = image_dir + dir_name
+
+# import ipdb; ipdb.set_trace()
+os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+### At this point, we will save the config as it becomes vital for testing in future
+torch.save({'cfg': cfg}, cfg.OUTPUT_DIR + '/' + dir_name + '_cfg.final')
+
+trainer = DefaultTrainer(cfg) 
+trainer.resume_or_load(resume=True)
+print("start training")
+trainer.train()
