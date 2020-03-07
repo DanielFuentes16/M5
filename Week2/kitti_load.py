@@ -1,12 +1,9 @@
 import glob
 import os
-import random
-import numpy as np
 import cv2
-from detectron2.data import DatasetCatalog, MetadataCatalog
 from detectron2.structures import BoxMode
 
-def get_KITTI_dicts(img_dir, is_train):
+def get_KITTI_dicts(image_dir):
     categories = {
     'Car': 0,
     'Van': 1,
@@ -20,7 +17,9 @@ def get_KITTI_dicts(img_dir, is_train):
     }
     
     #obtain
-    image_dir='/home/mcv/datasets/KITTI/training'
+    #image_dir='/home/mcv/datasets/KITTI/data_object_image_2/training/image_2'
+    #image_dir='/Users/danielfuentes/Desktop/KITTI/data_object_image_2/mini_train'
+    #label_dir='/Users/danielfuentes/Desktop/KITTI/training/label_2'
     label_dir='/home/mcv/datasets/KITTI/training/label_2'
     image_path = glob.glob(image_dir+ '/*.png')
     label_path = glob.glob(label_dir + '/*.txt')
@@ -35,7 +34,7 @@ def get_KITTI_dicts(img_dir, is_train):
     dataset_dicts = []
     
     #iteration
-    for i in range(0,len(label_file)):
+    for i in range(0,len(image_file)):
         record = {}
         height, width = cv2.imread(image_file[i]).shape[:2]
         record["file_name"] = image_file[i]
