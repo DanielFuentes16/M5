@@ -8,6 +8,8 @@ from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 import os
 from tqdm import tqdm
+from detectron2.utils.logger import setup_logger
+setup_logger('zutput_file')
 
 #Create custom datasets
 image_dir = 'datasets/KITTI/data_object_image_2/'

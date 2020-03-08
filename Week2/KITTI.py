@@ -1,78 +1,125 @@
-
-import cv2
-import glob
-import random
-from detectron2.utils.visualizer import Visualizer
-from detectron2.engine import DefaultTrainer
-from detectron2.data import DatasetCatalog
-from detectron2.config import get_cfg
-from detectron2.data import MetadataCatalog
 import os
+import glob
+import cv2
 
-PATH_TRAIN = '../datasets/MIT_split/train/'
+from detectron2.structures import BoxMode
+from detectron2.config import get_cfg
+from detectron2.data import DatasetCatalog
+from detectron2.data import MetadataCatalog
+from detectron2.engine import DefaultPredictor, DefaultTrainer
+from detectron2.utils.visualizer import Visualizer
+from detectron2.utils.logger import setup_logger
+setup_logger('zutput_file')
 
-# write a function that loads the dataset into detectron2's standard format
-def get_microcontroller_dicts():
-    classes = ['coast', 'forest', 'highway', 'inside_city', 'mountain', 'Opencountry', 'street', 'tallbuilding']
+PATH_TRAIN = '/home/mcv/datasets/KITTI/data_object_image_2/mini_train'
+PATH_TEST = '/home/mcv/datasets/KITTI/data_object_image_2/testing/image_2'
+PATH_RESULTS = './Results/'
+
+
+def get_KITTI_dicts(set_type):
+    categories = {
+        'Car': 0,
+        'Van': 1,
+        'Truck': 2,
+        'Pedestrian': 3,
+        'Person_sitting': 4,
+        'Cyclist': 5,
+        'Tram': 6,
+        'Misc': 7,
+        'DontCare': 8
+    }
+
+    if set_type is 'mini_train':
+        working_folder = '/home/mcv/datasets/KITTI/data_object_image_2/mini_train/'
+    if set_type is 'training':
+        working_folder = '/home/mcv/datasets/KITTI/data_object_image_2/training/image_2'
+    if set_type is 'testing':
+        working_folder = '/home/mcv/datasets/KITTI/data_object_image_2/testing/image_2'
+
+    # obtain
+    # image_dir='/home/mcv/datasets/KITTI/data_object_image_2/training/image_2'
+    # image_dir='/Users/danielfuentes/Desktop/KITTI/data_object_image_2/mini_train'
+    # label_dir='/Users/danielfuentes/Desktop/KITTI/training/label_2'
+    label_dir = '/home/mcv/datasets/KITTI/training/label_2'
+    image_path = glob.glob(working_folder + '/*.png')
+    label_path = glob.glob(label_dir + '/*.txt')
+    label_file = sorted(label_path)
+    image_file = sorted(image_path)
+    for file in image_file:
+        splitd = file.split(os.sep)
+        img_name = splitd[-1]
+        img_id = img_name.split('.')[0]
+        if set_type is not 'testing':
+            label_file.append(label_dir + img_id + '.txt')
+
     dataset_dicts = []
-    for class_i in classes:
-        for filename in glob.glob(PATH_TRAIN+class_i+'/*.jpg'):
-            record = {}
 
-            height, width = cv2.imread(filename).shape[:2]
+    # iteration
+    for i in range(0, len(image_file)):
+        record = {}
+        height, width = cv2.imread(image_file[i]).shape[:2]
+        record["file_name"] = image_file[i]
+        record["image_id"] = i
+        record["height"] = height
+        record["width"] = width
 
-            record["file_name"] = filename
-            record["height"] = height
-            record["width"] = width
-
+        if set_type is not 'testing':
             objs = []
-            obj = {'category_id': class_i}
-            objs.append(obj)
+            with open(label_file[i]) as f:
+                lines = f.readlines()
+            if len(lines) is 0:
+                print('No lines in file')
+                exit()
+            for line in lines:
+                col = line.split()
+                catg = categories[col[0]]
+                obj = {
+                    "bbox": [float(col[4]), float(col[5]), float(col[6]), float(col[7])],
+                    "bbox_mode": BoxMode.XYXY_ABS,
+                    "category_id": catg
+                }
+                objs.append(obj)
             record["annotations"] = objs
-            dataset_dicts.append(record)
-            print(filename)
+        dataset_dicts.append(record)
     return dataset_dicts
 
-DatasetCatalog.register("my_dataset", get_microcontroller_dicts)
-MetadataCatalog.get("my_dataset").thing_classes = ['coast', 'forest', 'highway', 'inside_city', 'mountain', 'Opencountry', 'street', 'tallbuilding']
+for d in ["train", "val"]:
+    DatasetCatalog.register("kitti" + d, lambda d=d: get_KITTI_dicts('mini_train' if d == 'train' else 'testing'))
+    MetadataCatalog.get("kitti" + d).set(thing_classes=['Car', 'Van', 'Truck', 'Pedestrian', 'Person_sitting', 'Cyclist', 'Tram', 'Misc', 'DontCare'])
+kitti_metadata = MetadataCatalog.get("kitti/train")
 
 cfg = get_cfg()
-cfg.merge_from_file(
-    "./detectron2_repo/configs/COCO-Detection/faster_rcnn_R_50_C4_1x.yaml"
-)
-#cfg.DATASETS.TRAIN = ("my_dataset",)
-cfg.DATASETS.TEST = ()  # no metrics implemented for this dataset
+cfg.merge_from_file("./detectron2_repo/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml")
+cfg.DATASETS.TRAIN = ("kittitrain",)
+cfg.DATASETS.TEST = ()   # no metrics implemented for this dataset
 cfg.DATALOADER.NUM_WORKERS = 2
-cfg.MODEL.WEIGHTS = "detectron2://ImageNetPretrained/MSRA/R-50.pkl"  #
+cfg.MODEL.WEIGHTS = "detectron2://COCO-Detection/faster_rcnn_R_101_FPN_3x/137851257/model_final_f6e8b1.pkl"
 cfg.SOLVER.IMS_PER_BATCH = 2
-cfg.SOLVER.BASE_LR = 0.02
-cfg.SOLVER.MAX_ITER = (
-    300
-)  # 300 iterations seems good enough, but you can certainly train longer
-cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = (
-    128
-)  # faster, and good enough for this toy dataset
-cfg.MODEL.ROI_HEADS.NUM_CLASSES = 8  # 3 classes (data, fig, hazelnut)
+cfg.SOLVER.MAX_ITER = 1000
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = 9
 
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
 trainer = DefaultTrainer(cfg)
 trainer.resume_or_load(resume=False)
 trainer.train()
 
+# load weights
 cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set the testing threshold for this model
-cfg.DATASETS.TEST = ("fruits_nuts", )
+
+# Set training data-set path
+cfg.DATASETS.TEST = ("kittival", )
+
+# Create predictor (model for inference)
 predictor = DefaultPredictor(cfg)
 
-from detectron2.utils.visualizer import ColorMode
-
-for d in random.sample(dataset_dicts, 3):
+dataset_dicts = get_KITTI_dicts('testing')
+for d in dataset_dicts:
     im = cv2.imread(d["file_name"])
+    _, filename = os.path.split(d["file_name"])
     outputs = predictor(im)
-    v = Visualizer(im[:, :, ::-1],
-                   metadata=fruits_nuts_metadata,
-                   scale=0.8,
-                   instance_mode=ColorMode.IMAGE_BW   # remove the colors of unsegmented pixels
-    )
+    v = Visualizer(im[:, :, ::-1], metadata=kitti_metadata, scale=0.8)
     v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-    cv2_imshow(v.get_image()[:, :, ::-1])
+
+    os.makedirs(PATH_RESULTS, exist_ok=True)
+    cv2.imwrite(PATH_RESULTS + filename, v.get_image()[:, :, ::-1])
