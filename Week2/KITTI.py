@@ -84,9 +84,9 @@ def get_KITTI_dicts(set_type):
     return dataset_dicts
 
 for d in ["train", "val"]:
-    DatasetCatalog.register("kitti" + d, lambda d=d: get_KITTI_dicts('mini_train' if d == 'train' else 'testing'))
+    DatasetCatalog.register("kitti" + d, lambda d=d: get_KITTI_dicts('training' if d == 'train' else 'testing'))
     MetadataCatalog.get("kitti" + d).set(thing_classes=['Car', 'Van', 'Truck', 'Pedestrian', 'Person_sitting', 'Cyclist', 'Tram', 'Misc', 'DontCare'])
-kitti_metadata = MetadataCatalog.get("kitti/train")
+kitti_metadata = MetadataCatalog.get("kittitrain")
 
 cfg = get_cfg()
 cfg.merge_from_file("./detectron2_repo/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml")
