@@ -15,4 +15,4 @@ To run each task run the scripts located in the Week2 folder as follows:
 ### Task C
 `python3 RetinaNet`
 ### Task D
-`python3 KITTI_cocoeval.py`
+`python3 KITTI.py`
