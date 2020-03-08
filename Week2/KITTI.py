@@ -1,6 +1,8 @@
 import os
 import glob
 import cv2
+from tqdm import tqdm
+from detectron2.evaluation import COCOEvaluator
 
 from detectron2.structures import BoxMode
 from detectron2.config import get_cfg
@@ -13,7 +15,6 @@ setup_logger('zutput_file')
 
 PATH_TRAIN = '/home/mcv/datasets/KITTI/data_object_image_2/mini_train'
 PATH_TEST = '/home/mcv/datasets/KITTI/data_object_image_2/testing/image_2'
-PATH_RESULTS = './Results/'
 
 
 def get_KITTI_dicts(set_type):
@@ -88,14 +89,18 @@ for d in ["train", "val"]:
     MetadataCatalog.get("kitti" + d).set(thing_classes=['Car', 'Van', 'Truck', 'Pedestrian', 'Person_sitting', 'Cyclist', 'Tram', 'Misc', 'DontCare'])
 kitti_metadata = MetadataCatalog.get("kittitrain")
 
+dataset_dicts = get_KITTI_dicts('testing')
+
 cfg = get_cfg()
 cfg.merge_from_file("./detectron2_repo/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml")
 cfg.DATASETS.TRAIN = ("kittitrain",)
 cfg.DATASETS.TEST = ()   # no metrics implemented for this dataset
 cfg.DATALOADER.NUM_WORKERS = 2
 cfg.MODEL.WEIGHTS = "detectron2://COCO-Detection/faster_rcnn_R_101_FPN_3x/137851257/model_final_f6e8b1.pkl"
-cfg.SOLVER.IMS_PER_BATCH = 2
-cfg.SOLVER.MAX_ITER = 1000
+cfg.SOLVER.IMS_PER_BATCH = 4
+cfg.SOLVER.BASE_LR = 0.00025
+cfg.SOLVER.MAX_ITER = 5 * len(dataset_dicts) // cfg.SOLVER.IMS_PER_BATCH + 1 
+cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 256
 cfg.MODEL.ROI_HEADS.NUM_CLASSES = 9
 
 os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
@@ -108,18 +113,7 @@ cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set the testing threshold for this model
 
 # Set training data-set path
-cfg.DATASETS.TEST = ("kittival", )
+cfg.DATASETS.TEST = ("kittitrain", )
 
-# Create predictor (model for inference)
-predictor = DefaultPredictor(cfg)
-
-dataset_dicts = get_KITTI_dicts('testing')
-for d in dataset_dicts:
-    im = cv2.imread(d["file_name"])
-    _, filename = os.path.split(d["file_name"])
-    outputs = predictor(im)
-    v = Visualizer(im[:, :, ::-1], metadata=kitti_metadata, scale=0.8)
-    v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-
-    os.makedirs(PATH_RESULTS, exist_ok=True)
-    cv2.imwrite(PATH_RESULTS + filename, v.get_image()[:, :, ::-1])
+evaluator = COCOEvaluator("kittitrain", cfg, False, output_dir="./output/")
+trainer.test(cfg, trainer.model, evaluators=[evaluator])
