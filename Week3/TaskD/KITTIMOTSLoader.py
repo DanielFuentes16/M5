@@ -16,7 +16,7 @@ def get_KITTIMOTS_dicts(set_type):
     #Since the split is always the same, save the results to pickles
     if os.path.exists('kittiMots.pkl'):
         print("Loading data from local pickle file")
-        data = pickle.load(open("kittiMotsTrain.pkl", "rb" ))
+        data = pickle.load(open("kittiMots.pkl", "rb" ))
         return data[0] if set_type is 'train' else data[1]
 
     image_path = '/home/mcv/datasets/KITTI-MOTS/training/image_02'
@@ -27,11 +27,8 @@ def get_KITTIMOTS_dicts(set_type):
 
     for i, imageFile in tqdm(enumerate(image_files), total=len(image_files)):
         record = {}
-        height, width = cv2.imread(imageFile).shape[:2]
         record["file_name"] = imageFile
         record["image_id"] = i
-        record["height"] = height
-        record["width"] = width
 
         splitPath = imageFile.split(os.sep)
         imageSet = splitPath[7]
@@ -44,6 +41,10 @@ def get_KITTIMOTS_dicts(set_type):
         if len(lines) is 0:
             print('No lines in file')
             exit()
+
+        height = record["height"] = lines[0][3]
+        width = record["width"] = lines[0][4]
+
         for line in lines:
             col = line.split()
             if imageNum is col[0]:
@@ -52,9 +53,8 @@ def get_KITTIMOTS_dicts(set_type):
                     'counts': col[5].strip(),
                     'size': [height, width]
                 }
-                bbox = mask.toBbox(rle)
                 obj = {
-                    "bbox": None,
+                    "bbox": mask.toBbox(rle),
                     "bbox_mode": BoxMode.XYXY_ABS,
                     "category_id": catg
                 }
@@ -67,5 +67,5 @@ def get_KITTIMOTS_dicts(set_type):
     return trainData if set_type is 'train' else valData
 
 
-len(get_KITTIMOTS_dicts('train'))
-len(get_KITTIMOTS_dicts('test'))
+print(len(get_KITTIMOTS_dicts('train')))
+print(len(get_KITTIMOTS_dicts('test')))
