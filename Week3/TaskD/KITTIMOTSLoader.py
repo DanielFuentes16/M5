@@ -47,7 +47,7 @@ def get_KITTIMOTS_dicts(set_type):
 
         for line in lines:
             col = line.split()
-            if imageNum is col[0]:
+            if imageNum is int(col[0]):
                 catg = int(col[1]) // 1000
                 rle = {
                     'counts': col[5].strip(),
