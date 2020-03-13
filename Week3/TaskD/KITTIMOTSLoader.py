@@ -49,6 +49,12 @@ def get_KITTIMOTS_dicts(set_type):
             col = line.split()
             if imageNum is int(col[0]):
                 catg = int(col[1]) // 1000
+                if catg is 1:
+                    catg = 0
+                elif catg is 2:
+                    catg = 1
+                else:
+                    catg = 2
                 rle = {
                     'counts': col[5].strip(),
                     'size': [height, width]
@@ -65,7 +71,3 @@ def get_KITTIMOTS_dicts(set_type):
     trainData, valData, _, _ = train_test_split(dataset_dicts, dataset_dicts, test_size=0.20, random_state=42)
     pickle.dump([trainData, valData], open("kittiMots.pkl", "wb" ))
     return trainData if set_type is 'train' else valData
-
-
-print(len(get_KITTIMOTS_dicts('train')))
-print(len(get_KITTIMOTS_dicts('test')))
