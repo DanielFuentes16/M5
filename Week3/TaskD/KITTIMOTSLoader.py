@@ -42,8 +42,8 @@ def get_KITTIMOTS_dicts(set_type):
             print('No lines in file')
             exit()
 
-        height = record["height"] = lines[0][3]
-        width = record["width"] = lines[0][4]
+        height = record["height"] = int(lines[0].split()[3])
+        width = record["width"] = int(lines[0].split()[4])
 
         for line in lines:
             col = line.split()
