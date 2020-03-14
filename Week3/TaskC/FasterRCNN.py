@@ -1,54 +1,49 @@
 import cv2
 import glob
 import os
-from detectron2.engine import DefaultPredictor
+from detectron2.engine import DefaultPredictor, DefaultTrainer
 from detectron2.config import get_cfg
 from detectron2.utils.visualizer import Visualizer
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.utils.logger import setup_logger
-
+from detectron2.evaluation import COCOEvaluator
 import time
-
 setup_logger()
+from KITTIMOTSLoader import get_KITTIMOTS_dicts
 
-Debug = False
-
-PATH_TRAIN = '/home/mcv/datasets/KITTI-MOTS/training/image_02/'
-PATH_TEST = '/home/mcv/datasets/KITTI/data_object_image_2/testing/image_2'
-PATH_RESULTS = './Results/'
+print('########################################################')
+print('########################################################')
+print('################## Load KittiMots ######################')
+print('########################################################')
+print('########################################################')
+for d in ["train", "val"]:
+    DatasetCatalog.register("kittimots-" + d, lambda d=d: get_KITTIMOTS_dicts(d))
+    MetadataCatalog.get("kittimots-" + d).set(thing_classes=['Car', 'Pedestrian', 'DontCare'])
 
 # Create config
+print('########################################################')
+print('########################################################')
+print('################## Configuration #######################')
+print('########################################################')
+print('########################################################')
 cfg = get_cfg()
-cfg.merge_from_file("../Week2/detectron2_repo/configs/COCO-Detection/faster_rcnn_R_101_C4_3x.yaml")
-cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7  # set threshold for this model
-cfg.MODEL.WEIGHTS = "detectron2://COCO-Detection/faster_rcnn_R_101_C4_3x/138204752/model_final_298dad.pkl"
+cfg.merge_from_file("../../Week2/detectron2_repo/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml")
+cfg.DATASETS.TRAIN = ("kittimots-train",)
+cfg.DATASETS.TEST = ("kittimots-val",)
+cfg.DATALOADER.NUM_WORKERS = 2
+cfg.MODEL.WEIGHTS = "detectron2://COCO-Detection/faster_rcnn_R_101_FPN_3x/137851257/model_final_f6e8b1.pkl"
+os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+trainer = DefaultTrainer(cfg)
+trainer.resume_or_load(resume=False)
 
-# Inference
-predictor = DefaultPredictor(cfg)
-tic = time.perf_counter()
-count = 0;
-counter = 0;
-for filePath in glob.glob(PATH_TRAIN + '/*/*.png'):
-    count =+1
-    tic = time.perf_counter()
-    path, filename = os.path.split(filePath)
+#Evaluation with COCO
+print('########################################################')
+print('########################################################')
+print('#################### Evaluation ########################')
+print('########################################################')
+print('########################################################')
+evaluator = COCOEvaluator("kittimots-train", cfg, False, output_dir="./output/")
+trainer.test(cfg, trainer.model, evaluators=[evaluator])
 
-    if Debug:
-        print(filePath)
 
-    # Make prediction
-    im = cv2.imread(filePath)
-    outputs = predictor(im)
 
-    # Visualize the prediction in the image
-    v = Visualizer(im[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2)
-    v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-
-    if Debug:
-        print(filename)
-    toc = time.perf_counter()
-    counter = counter + (toc - tic)
-    os.makedirs(PATH_RESULTS, exist_ok=True)
-    cv2.imwrite(PATH_RESULTS + filename, v.get_image()[:, :, ::-1])
-
-print(f"Downloaded the tutorial in {counter/count:0.4f} (s/im)")

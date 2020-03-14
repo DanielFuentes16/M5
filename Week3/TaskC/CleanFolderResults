@@ -1,0 +1,18 @@
+#!/bin/bash
+output="/output"
+pkl="kittiMots.pkl"
+resultFiles="tgpu.sh_grupo09_"
+echo "Start Cleaning"
+
+if [ -d "output" ] ; then
+    rm -r output
+    echo "deleted output"
+fi
+
+if [ -f "kittiMots.pkl" ] ; then
+    rm -r -f $pkl
+    echo "deleted pkl"
+fi
+
+find . -type f -iname "tgpu.sh_grupo09_*"
+find . -type f -iname "tgpu.sh_grupo09_*" -delete
