@@ -14,7 +14,7 @@ def get_KITTIMOTS_dicts(set_type):
         raise Exception("Invalid set type")
 
     #Since the split is always the same, save the results to pickles
-    if os.path.exists('kittiMots.pkl'):
+    if False and os.path.exists('kittiMots.pkl'):
         print("Loading data from local pickle file")
         data = pickle.load(open("kittiMots.pkl", "rb" ))
         return data[0] if set_type is 'train' else data[1]
@@ -59,9 +59,10 @@ def get_KITTIMOTS_dicts(set_type):
                     'counts': col[5].strip(),
                     'size': [height, width]
                 }
+                bbox = mask.toBbox(rle)
                 obj = {
-                    "bbox": mask.toBbox(rle),
-                    "bbox_mode": BoxMode.XYXY_ABS,
+                    "bbox": (bbox[0], bbox[1], bbox[2], bbox[3],),
+                    "bbox_mode": BoxMode.XYWH_ABS,
                     "category_id": catg
                 }
                 objs.append(obj)
