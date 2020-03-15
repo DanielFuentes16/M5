@@ -15,4 +15,4 @@ To run each task run the scripts located in the Week3/TaskX folder as follows:
 ### Task D
 `python3 F-CNN_KITTI.py` or `python3 F-CNN_MOTS.py` or `python3 RetinaNet_KITTI.py` or `python3 RetinaNet_MOTS.py`
 ### Task E
-`python3 RetinaNet_KITTI.py` or `python3 FasterRCNN.py`
+`python3 RetinaNet_KITTI.py` or `python3 F-CNN_KITTI.py`
