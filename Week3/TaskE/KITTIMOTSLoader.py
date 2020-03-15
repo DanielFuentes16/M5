@@ -63,17 +63,17 @@ def get_KITTIMOTS_dicts(set_type, splits=2):
         record["annotations"] = objs
         dataset_dicts.append(record)
 
-    if splits is 2:
+    if splits == 2:
         #80/20 split
         trainData, valData, _, _ = train_test_split(dataset_dicts, dataset_dicts, test_size=0.20, random_state=42)
         return trainData if set_type is 'train' else valData
-    elif splits is 3:
+    elif splits == 3:
             #60/20/20 split
         trainData, valData, _, _ = train_test_split(dataset_dicts, dataset_dicts, test_size=0.40, random_state=42)
         testData, valData, _, _ = train_test_split(valData, valData, test_size=0.50, random_state=42)
-        if set_type is 'train':
-            return trainData 
-        elif set_type is 'val':
+        if set_type == 'train':
+            return trainData
+        elif set_type == 'val':
             return valData
         else:
             return testData
