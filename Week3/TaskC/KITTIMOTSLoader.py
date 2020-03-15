@@ -7,25 +7,14 @@ from sklearn.model_selection import train_test_split
 from detectron2.structures import BoxMode
 import mask
 import pickle
-testing = False
 
-def get_KITTIMOTS_dicts(set_type):
-    if set_type is not 'train' and set_type is not 'test' and set_type is not 'val':
+
+def get_KITTIMOTS_dicts(set_type, splits=2):
+    if splits > 1 and set_type is not 'train' and set_type is not 'test' and set_type is not 'val':
         raise Exception("Invalid set type")
 
-    #Since the split is always the same, save the results to pickles
-    if os.path.exists('kittiMots.pkl'):
-        print("Loading data from local pickle file")
-        data = pickle.load(open("kittiMots.pkl", "rb" ))
-        return data[0] if set_type is 'train' else data[1]
-
-    if testing:
-        image_path = '/Users/danielfuentes/Desktop/KITTI-MOTS/training/image_02'
-        label_path = '/Users/danielfuentes/Desktop/KITTI-MOTS/instances_txt'
-    else:
-        image_path = '/home/mcv/datasets/KITTI-MOTS/training/image_02'
-        label_path = '/home/mcv/datasets/KITTI-MOTS/instances_txt'
-
+    image_path = '/home/mcv/datasets/KITTI-MOTS/training/image_02'
+    label_path = '/home/mcv/datasets/KITTI-MOTS/instances_txt'
     image_files = glob.glob(image_path + '/*/*.png')
 
     dataset_dicts = []
@@ -53,7 +42,7 @@ def get_KITTIMOTS_dicts(set_type):
         for line in lines:
             col = line.split()
             if imageNum is int(col[0]):
-                catg = int(col[1]) % 1000
+                catg = int(col[1]) // 1000
                 if catg is 1:
                     catg = 0
                 elif catg is 2:
@@ -64,17 +53,31 @@ def get_KITTIMOTS_dicts(set_type):
                     'counts': col[5].strip(),
                     'size': [height, width]
                 }
+                bbox = mask.toBbox(rle)
                 obj = {
-                    "category_id": catg,
-                    "bbox": mask.toBbox(rle),
-                    "bbox_mode": BoxMode.XYXY_ABS
+                    "bbox": (bbox[0], bbox[1], bbox[2], bbox[3],),
+                    "bbox_mode": BoxMode.XYWH_ABS,
+                    "category_id": catg
                 }
                 objs.append(obj)
         record["annotations"] = objs
         dataset_dicts.append(record)
 
-    trainData, valData, _, _ = train_test_split(dataset_dicts, dataset_dicts, test_size=0.20, random_state=42)
-    pickle.dump([trainData, valData], open("kittiMots.pkl", "wb" ))
-    return trainData if set_type is 'train' else valData
-if(testing):
-    dataset = get_KITTIMOTS_dicts('train')
+    if splits is 1:
+        return dataset_dicts
+    elif splits is 2:
+        #80/20 split
+        trainData, valData, _, _ = train_test_split(dataset_dicts, dataset_dicts, test_size=0.20, random_state=42)
+        return trainData if set_type is 'train' else valData
+    elif splits is 3:
+            #60/20/20 split
+        trainData, valData, _, _ = train_test_split(dataset_dicts, dataset_dicts, test_size=0.40, random_state=42)
+        testData, valData, _, _ = train_test_split(valData, valData, test_size=0.50, random_state=42)
+        if set_type is 'train':
+            return trainData 
+        elif set_type is 'val':
+            return valData
+        else:
+            return testData
+    else:
+        raise Exception("Too many splits")
