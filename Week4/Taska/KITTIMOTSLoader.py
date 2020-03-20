@@ -3,6 +3,7 @@ import glob
 import cv2
 from tqdm import tqdm
 import numpy as np
+from pycocotools import coco
 from sklearn.model_selection import train_test_split
 from detectron2.structures import BoxMode
 import mask
@@ -60,10 +61,18 @@ def get_KITTIMOTS_dicts(set_type):
                     'size': [height, width]
                 }
                 bbox = mask.toBbox(rle)
+                maskk = coco.maskUtils.decode(rle)
+                contours, _ = cv2.findContours(maskk, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                seg = [[int(i) for i in c.flatten()] for c in contours]
+                seg = [s for s in seg if len(s) >= 6]
+                if not seg:
+                    continue
+
                 obj = {
                     "bbox": (bbox[0], bbox[1], bbox[2], bbox[3],),
                     "bbox_mode": BoxMode.XYWH_ABS,
-                    "category_id": catg
+                    "category_id": catg,
+                    'segmentation': seg
                 }
                 objs.append(obj)
         record["annotations"] = objs

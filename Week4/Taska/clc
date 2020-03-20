@@ -14,8 +14,8 @@ if [ -f "kittiMots.pkl" ] ; then
     echo "deleted pkl"
 fi
 echo "50%"
-find . -type f -iname "joba.sh_grupo09_*"
+find . -type f -iname "job*.sh.*"
 echo "75%"
-find . -type f -iname "joba.sh_grupo09_*" -delete
+find . -type f -iname "job*.sh.*" -delete
 echo "100%"
 echo "End Cleaning"
