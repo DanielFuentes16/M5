@@ -7,7 +7,7 @@ class MaskConfiguration:
         "R50-DC5" : ('/home/grupo09/df/Week2/detectron2_repo/configs/COCO-InstanceSegmentation/mask_rcnn_R_50_DC5_1x.yaml',
                           'detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_DC5_1x/137260150/model_final_4f86c3.pkl'),
 
-        "R50-FPN" : ('/home/grupo09/df/Week2/detectron2_repo/configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yam',
+        "R50-FPN" : ('/home/grupo09/df/Week2/detectron2_repo/configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x.yaml',
                           'detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_1x/137260431/model_final_a54504.pkl'),
 
         "R101-C4" : ('/home/grupo09/df/Week2/detectron2_repo/configs/COCO-InstanceSegmentation/mask_rcnn_R_101_C4_3x.yaml',
@@ -20,7 +20,7 @@ class MaskConfiguration:
                           'detectron2://COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x/138205316/model_final_a3ec72.pkl'),
 
         "R50-FPN-CS" : ('/home/grupo09/df/Week2/detectron2_repo/configs/Cityscapes/mask_rcnn_R_50_FPN.yaml',
-                          'detectron2://COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x/137849600/model_final_f10217.pkl')
+                          'detectron2://Cityscapes/mask_rcnn_R_50_FPN/142423278/model_final_af9cf5.pkl')
         }
 
     def get_Configuration(self, configuration):

@@ -11,7 +11,7 @@ from detectron2.config import get_cfg
 from detectron2.data import DatasetCatalog
 from detectron2.data import MetadataCatalog
 from detectron2.engine import DefaultPredictor, DefaultTrainer
-from detectron2.utils.visualizer import Visualizer
+from detectron2.utils.visualizer import Visualizer, ColorMode
 from detectron2.utils.logger import setup_logger
 from detectron2.modeling import build_model
 from detectron2.checkpoint import DetectionCheckpointer
@@ -56,42 +56,35 @@ class MaskCNN_MOTS(object):
 
         cfg.merge_from_file(configuration[0])
         #cfg.merge_from_file("./detectron2_repo/configs/COCO-Detection/faster_rcnn_R_101_FPN_3x.yaml")
-
-        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
+        metasata =  MetadataCatalog.get(cfg.DATASETS.TRAIN[0])
         cfg.DATASETS.TRAIN = ('fcnn-motstrain',)
         cfg.DATASETS.TEST = ('fcnn-motsval',)
+        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
 
         cfg.OUTPUT_DIR = PATH_RESULTS
         #cfg.MODEL.WEIGHTS = "detectron2://COCO-Detection/faster_rcnn_R_101_FPN_3x/137851257/model_final_f6e8b1.pkl"
         cfg.MODEL.WEIGHTS = configuration[1]
 
-
-
-
-
         if(inference):
             predictor = DefaultPredictor(cfg)
             for filePath in glob.glob(PATH_TRAIN + '/*/*.png'):
                 path, filename = os.path.split(filePath)
-
+                print(filePath)
                 # Make prediction
                 im = cv2.imread(filePath)
                 outputs = predictor(im)
 
                 # Visualize the prediction in the image
-                v = Visualizer(im[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=1.2)
+                #v = Visualizer(im[:, :, ::-1], MetadataCatalog.get(cfg.DATASETS.TRAIN[0]), scale=0.8)
+                v = Visualizer(
+                    im[:, :, ::-1],
+                    metadata=metasata,
+                    scale=0.8,
+                    instance_mode=ColorMode.IMAGE)
                 v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
 
                 os.makedirs(PATH_RESULTS, exist_ok=True)
                 cv2.imwrite(PATH_RESULTS + filename, v.get_image()[:, :, ::-1])
-
-
-
-
-
-
-
-
 
         #dataset_dicts = get_KITTIMOTS_dicts('val')
 
