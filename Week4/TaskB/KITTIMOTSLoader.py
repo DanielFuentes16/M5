@@ -14,6 +14,13 @@ def get_KITTIMOTS_dicts(set_type):
     if set_type is not 'train' and set_type is not 'test' and set_type is not 'val':
         raise Exception("Invalid set type")
 
+    pkl_name = 'kittiMots_train.pkl' if set_type is "train" else 'kittiMots_val.pkl'
+
+    if os.path.exists(pkl_name):
+        print("Loading data from local pickle file")
+        data = pickle.load(open(pkl_name, "rb"))
+        return data
+
     image_path = '/home/mcv/datasets/KITTI-MOTS/training/image_02'
     label_path = '/home/mcv/datasets/KITTI-MOTS/instances_txt'
 
@@ -74,7 +81,7 @@ def get_KITTIMOTS_dicts(set_type):
                     continue
 
                 obj = {
-                    "bbox": (bbox[0], bbox[1], bbox[2], bbox[3],),
+                    "bbox": (bbox[0], bbox[1], bbox[2], bbox[3]),
                     "bbox_mode": BoxMode.XYWH_ABS,
                     "category_id": catg,
                     'segmentation': seg
@@ -83,4 +90,5 @@ def get_KITTIMOTS_dicts(set_type):
         record["annotations"] = objs
         dataset_dicts.append(record)
 
+    pickle.dump(dataset_dicts, open(pkl_name, "wb"))
     return dataset_dicts

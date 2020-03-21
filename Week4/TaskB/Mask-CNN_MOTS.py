@@ -49,15 +49,15 @@ class MaskCNN_MOTS(object):
         print("////////////////////////////////////////////////////////")
         print("////////////////////////////////////////////////////////")
         dataset = get_KITTIMOTS_dicts("train")
-        dataset_val = get_KITTIMOTS_dicts("val")
+        
         for d in ["train", "val"]:
             DatasetCatalog.register("fcnn-mots" + d, lambda d=d: get_KITTIMOTS_dicts(d))
-            MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=['Car', 'DontCare', 'Pedestrian'])
+            MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=['Car', 'Pedestrian', 'DontCare'])
         # Inference
         cfg = get_cfg()
 
         cfg.merge_from_file(configuration[0])
-        metadata =  MetadataCatalog.get(cfg.DATASETS.TRAIN[0])
+        metadata =  MetadataCatalog.get("fcnn-motstrain")
         cfg.DATASETS.TRAIN = ('fcnn-motstrain',)
         cfg.DATASETS.TEST = ('fcnn-motsval',)
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
@@ -81,10 +81,43 @@ class MaskCNN_MOTS(object):
         trainer.resume_or_load(resume=False)
         trainer.train()
 
+        cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set the testing threshold for this model
+
+        # Set training data-set path
+        cfg.DATASETS.TEST = ('fcnn-motsval',)
+
         # Evaluation
         evaluator = COCOEvaluator('fcnn-motsval', cfg, False, output_dir='./output{}'.format(conf))
-        trainer = DefaultTrainer(cfg)
-        trainer.test(cfg, model, evaluators=[evaluator])
+        trainer.test(cfg, trainer.model, evaluators=[evaluator])
+
+        print("Generating images with predictions...")
+
+        dataset_val = get_KITTIMOTS_dicts("val")
+
+        imagesToPredict = [97, 356, 527, 1293, 1875, 2121]
+
+        cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+        predictor = DefaultPredictor(cfg)
+        
+        for img_idx in imagesToPredict:
+            filePath = dataset_val[img_idx]['file_name']
+            path, filename = os.path.split(filePath)
+            # Make prediction
+            im = cv2.imread(filePath)
+            outputs = predictor(im)
+
+            # Visualize the prediction in the image
+            v = Visualizer(
+                im[:, :, ::-1],
+                metadata=metadata,
+                scale=0.8,
+                instance_mode=ColorMode.IMAGE)
+            v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+
+            os.makedirs(PATH_RESULTS, exist_ok=True)
+            cv2.imwrite(PATH_RESULTS + filename, v.get_image()[:, :, ::-1])
+
 
 if __name__ == '__main__':
     MaskCNN_MOTS().run(sys.argv)
