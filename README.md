@@ -6,13 +6,9 @@ Week 3: Introduction to Object Detection
 ### [Overleaf Report](https://www.overleaf.com/read/djsbfhpnqrqy "Ovearleaf")
 
 ## To run the code
-To run each task run the scripts located in the Week3/TaskX folder as follows:
+To run each task run the scripts located in the Week4/TaskX folder as follows:
 
+### Task A
+`python3 Mask-CNN_MOTS.py R50-C4/R50-DC5/R50-FPN/R101-C4/R101-DC5/R101-FPN/R50-FPN-CS`
 ### Task B
-`python3 FasterRCNN.py` or `python3 RetinaNet.py`
-### Task C
-`python3 FasterRCNN.py` or `python3 RetinaNet.py`
-### Task D
-`python3 F-CNN_KITTI.py` or `python3 F-CNN_MOTS.py` or `python3 RetinaNet_KITTI.py` or `python3 RetinaNet_MOTS.py`
-### Task E
-`python3 RetinaNet_KITTI.py` or `python3 F-CNN_KITTI.py`
+`python3 Mask-CNN_MOTS.py R50-C4/R50-DC5/R50-FPN/R101-C4/R101-DC5/R101-FPN/R50-FPN-CS`
