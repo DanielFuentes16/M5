@@ -3,6 +3,7 @@ import glob
 import cv2
 from tqdm import tqdm
 import numpy as np
+from pycocotools import coco
 from sklearn.model_selection import train_test_split
 from detectron2.structures import BoxMode
 import mask
@@ -10,14 +11,14 @@ import pickle
 
 
 def get_MOTS_dicts(set_type):
-    if set_type is not 'train' and set_type is not 'test' and set_type is not 'val':
+    if set_type is not 'train' and set_type is not 'test' and set_type is not 'val' and set_type is not "full":
         raise Exception("Invalid set type")
 
     #Since the split is always the same, save the results to pickles
-    if False and os.path.exists('kittiMots.pkl'):
+    if set_type == "full" and os.path.exists("mots_full.pkl"):
         print("Loading data from local pickle file")
-        data = pickle.load(open("kittiMots.pkl", "rb" ))
-        return data[0] if set_type is 'train' else data[1]
+        data = pickle.load(open("mots_full.pkl", "rb"))
+        return data
 
     image_path = '/home/mcv/datasets/MOTSChallenge/train/images'
     label_path = '/home/mcv/datasets/MOTSChallenge/train/instances_txt'
@@ -61,16 +62,25 @@ def get_MOTS_dicts(set_type):
                     'size': [height, width]
                 }
                 bbox = mask.toBbox(rle)
+                maskk = coco.maskUtils.decode(rle)
+                contours, _ = cv2.findContours(maskk, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                seg = [[int(i) for i in c.flatten()] for c in contours]
+                seg = [s for s in seg if len(s) >= 6]
+                if not seg:
+                    continue
+
                 obj = {
-                    "bbox": (bbox[0], bbox[1], bbox[2], bbox[3],),
+                    "bbox": (bbox[0], bbox[1], bbox[2], bbox[3]),
                     "bbox_mode": BoxMode.XYWH_ABS,
-                    "category_id": catg
+                    "category_id": catg,
+                    'segmentation': seg
                 }
                 objs.append(obj)
         record["annotations"] = objs
         dataset_dicts.append(record)
 
     if set_type == "full":
+        pickle.dump(dataset_dicts, open("mots_full.pkl", "wb"))
         return dataset_dicts
 
     trainData, valData, _, _ = train_test_split(dataset_dicts, dataset_dicts, test_size=0.20, random_state=42)
