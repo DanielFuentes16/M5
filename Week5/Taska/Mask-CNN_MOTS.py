@@ -31,8 +31,13 @@ class MaskCNN_MOTS(object):
         else:
             conf = argv[1]
             configuration = mk.MaskConfiguration().get_Configuration(conf)
+            check = '16'
+            checkpoint = configuration[1]
+        if len(argv) == 3:
+            check = argv[2]
+            checkpoint = mk.MaskConfiguration().get_Checkpoint(check)
 
-        PATH_RESULTS = './Results-{}/'.format(conf)
+        PATH_RESULTS = './Results-{}-{}/'.format(conf, check)
         PATH_TRAIN = '/home/mcv/datasets/KITTI-MOTS/training/image_02/'
         os.makedirs(PATH_RESULTS, exist_ok=True)
 
@@ -47,7 +52,7 @@ class MaskCNN_MOTS(object):
 
         for d in ["train", "val"]:
             DatasetCatalog.register("fcnn-mots" + d, lambda d=d: get_KITTIMOTS_dicts(d))
-            MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=['Car', 'DontCare','Pedestrian'])
+            MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=['Car','Pedestrian', 'DontCare'])
 
         # Inference
         cfg = get_cfg()
@@ -57,7 +62,8 @@ class MaskCNN_MOTS(object):
         cfg.DATASETS.TEST = ('fcnn-motsval',)
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
         cfg.OUTPUT_DIR = PATH_RESULTS
-        cfg.MODEL.WEIGHTS = configuration[1]
+        cfg.MODEL.WEIGHTS = checkpoint
+        cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3
 
         if(inference):
             predictor = DefaultPredictor(cfg)

@@ -23,5 +23,12 @@ class MaskConfiguration:
                           'detectron2://Cityscapes/mask_rcnn_R_50_FPN/142423278/model_final_af9cf5.pkl')
         }
 
+        self.checkpoints = {
+            "Kitti": '/home/grupo09/df/Week5/Taska/Checkpoints/model_final.pth',
+            "City": '/home/grupo09/df/Week5/Taska/Checkpoints/model_final_CS.pth'
+        }
     def get_Configuration(self, configuration):
         return self.configurations.get(configuration)
+
+    def get_Checkpoint(self, checkpoint):
+        return self.checkpoints.get(checkpoint)
