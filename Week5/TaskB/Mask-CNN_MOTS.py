@@ -26,129 +26,121 @@ from KITTIMOTSLoader import get_KITTIMOTS_dicts
 from MOTSChallengeLoader import get_MOTS_dicts
 import MaskConfiguration as mk
 
-inference = True
-class MaskCNN_MOTS(object):
-    def run(self, argv):
-        useCityscapes = "CS" in sys.argv
-        print("Has Cityscapes training data:" + str(useCityscapes))
-        useMOTSChallenge = "MOTS" in sys.argv
-        print("Has MOTSChallenge training data:" + str(useMOTSChallenge))
-        useKITTIMOTS = "KITTI" in sys.argv
-        print("Has KITTI-MOTS training data:" + str(useKITTIMOTS))
-        conf = "R50-FPN" if useCityscapes is False else "R50-FPN-CS"
-        print(conf)
-        if useMOTSChallenge is False and useKITTIMOTS is False:
-            exit(0)
-        else:
-            configuration = mk.MaskConfiguration().get_Configuration(conf)
-        PATH_RESULTS = './Results-{}/'.format(conf)
-        combo = ""
-        if useCityscapes is True:
-            combo += "-CS"
-        if useKITTIMOTS is True:
-            combo += "-KITTI"
-        if useMOTSChallenge is True:
-            combo += "-MOTS"
-        PATH_RESULTS += combo
-        os.makedirs(PATH_RESULTS, exist_ok=True)
-        print("////////////////////////////////////////////////////////")
-        print("////////////////////Configuration///////////////////////")
-        print("////////////////////////////////////////////////////////")
-        print(configuration[0])
-        print(configuration[1])
-        print("////////////////////////////////////////////////////////")
-        print("////////////////////////////////////////////////////////")
-        print("////////////////////////////////////////////////////////")
-        
-        trainDataCount = 0
-        trainDatasetList = []
+useCityscapes = "CS" in sys.argv
+print("Has Cityscapes training data: " + str(useCityscapes))
+useMOTSChallenge = "MOTS" in sys.argv
+print("Has MOTSChallenge training data: " + str(useMOTSChallenge))
+useKITTIMOTS = "KITTI" in sys.argv
+print("Has KITTI-MOTS training data: " + str(useKITTIMOTS))
+conf = "R50-FPN" if useCityscapes is False else "R50-FPN-CS"
+print("Base model: " + str(conf))
+if useMOTSChallenge is False and useKITTIMOTS is False:
+    exit(0)
+else:
+    configuration = mk.MaskConfiguration().get_Configuration(conf)
+combo = ""
+if useKITTIMOTS is True:
+    combo += "-KITTI"
+if useMOTSChallenge is True:
+    combo += "-MOTS"
+print("Training " + conf + combo + " model")
+PATH_RESULTS = './Results-{}{}/'.format(conf, combo)
+os.makedirs(PATH_RESULTS, exist_ok=True)
+print("////////////////////////////////////////////////////////")
+print("////////////////////Configuration///////////////////////")
+print("////////////////////////////////////////////////////////")
+print(configuration[0])
+print(configuration[1])
+print("////////////////////////////////////////////////////////")
+print("////////////////////////////////////////////////////////")
+print("////////////////////////////////////////////////////////")
 
-        if useKITTIMOTS is True:
-            for d in ["train"]:
-                DatasetCatalog.register("kitti" + d, lambda d=d: get_KITTIMOTS_dicts(d))
-                MetadataCatalog.get("kitti" + d).set(thing_classes=['Car', 'Pedestrian'])
-            kittiDataset = get_KITTIMOTS_dicts("train")
-            trainDataCount += len(kittiDataset)
-            trainDatasetList.append("kitti" + d)
+trainDataCount = 0
+trainDatasetList = []
 
-        if useMOTSChallenge is True:
-            for d in ["full"]:
-                DatasetCatalog.register("mots" + d, lambda d=d: get_MOTS_dicts(d))
-                MetadataCatalog.get("mots" + d).set(thing_classes=['Car', 'Pedestrian'])
-            motsDataset = get_MOTS_dicts("full")
-            trainDataCount += len(motsDataset)
-            trainDatasetList.append("mots" + d)
+if useKITTIMOTS is True:
+    for d in ["train"]:
+        DatasetCatalog.register("kitti" + d, lambda d=d: get_KITTIMOTS_dicts(d))
+        MetadataCatalog.get("kitti" + d).set(thing_classes=['Car', 'Pedestrian'])
+    kittiDataset = get_KITTIMOTS_dicts("train")
+    trainDataCount += len(kittiDataset)
+    trainDatasetList.append("kitti" + d)
 
-        for d in ["val"]:
-            DatasetCatalog.register("kitti" + d, lambda d=d: get_KITTIMOTS_dicts(d))
-            MetadataCatalog.get("kitti" + d).set(thing_classes=['Car', 'Pedestrian'])
-        # Inference
-        cfg = get_cfg()
+if useMOTSChallenge is True:
+    for d in ["full"]:
+        DatasetCatalog.register("mots" + d, lambda d=d: get_MOTS_dicts(d))
+        MetadataCatalog.get("mots" + d).set(thing_classes=['Car', 'Pedestrian'])
+    motsDataset = get_MOTS_dicts("full")
+    trainDataCount += len(motsDataset)
+    trainDatasetList.append("mots" + d)
 
-        cfg.merge_from_file(configuration[0])
-        metadata = MetadataCatalog.get("kittival")
-        cfg.DATASETS.TRAIN = tuple(trainDatasetList)
-        cfg.DATASETS.TEST = ('kittival',)
-        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
+for d in ["val"]:
+    DatasetCatalog.register("kitti" + d, lambda d=d: get_KITTIMOTS_dicts(d))
+    MetadataCatalog.get("kitti" + d).set(thing_classes=['Car', 'Pedestrian'])
 
-        cfg.OUTPUT_DIR = PATH_RESULTS
-        cfg.MODEL.WEIGHTS = configuration[1]
+cfg = get_cfg()
 
-        #Train parameters
-        cfg.DATALOADER.NUM_WORKERS = 2
-        cfg.SOLVER.IMS_PER_BATCH = 4
-        cfg.SOLVER.BASE_LR = 0.00025
-        itersToFullDataset = trainDataCount // cfg.SOLVER.IMS_PER_BATCH + 1
-        itersMultiplier = 1
-        itersDivider = 3
-        cfg.SOLVER.MAX_ITER = itersMultiplier * itersToFullDataset // itersDivider
-        cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 256
-        cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
+cfg.merge_from_file(configuration[0])
+metadata = MetadataCatalog.get("kittival")
+cfg.DATASETS.TRAIN = tuple(trainDatasetList)
+cfg.DATASETS.TEST = ('kittival',)
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
 
-        os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
-        trainer = DefaultTrainer(cfg)
-        trainer.resume_or_load(resume=False)
-        trainer.train()
+cfg.OUTPUT_DIR = PATH_RESULTS
+cfg.MODEL.WEIGHTS = configuration[1]
 
-        cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
-        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set the testing threshold for this model
+#Train parameters
+cfg.DATALOADER.NUM_WORKERS = 2
+cfg.SOLVER.IMS_PER_BATCH = 4
+cfg.SOLVER.BASE_LR = 0.00025
+itersToFullDataset = trainDataCount // cfg.SOLVER.IMS_PER_BATCH + 1
+itersMultiplier = 5
+itersDivider = 1
+# cfg.SOLVER.MAX_ITER = itersMultiplier * itersToFullDataset // itersDivider
+# cfg.SOLVER.MAX_ITER = 12570 # Hardcoded to be same as last week (Takes too long to complete)
+cfg.SOLVER.MAX_ITER = 5000
 
-        # Set training data-set path
-        cfg.DATASETS.TEST = ('kittival',)
+cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 256
+cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
 
-        # Evaluation
-        evaluator = COCOEvaluator('kittival', cfg, False, output_dir='./output-{}'.format(conf) + combo)
-        trainer.test(cfg, trainer.model, evaluators=[evaluator])
+os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
+trainer = DefaultTrainer(cfg)
+trainer.resume_or_load(resume=False)
+trainer.train()
 
-        print("Generating images with predictions...")
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set the testing threshold for this model
 
-        dataset_val = get_KITTIMOTS_dicts("val")
+# Set training data-set path
+cfg.DATASETS.TEST = ('kittival',)
 
-        imagesToPredict = [97, 356, 527, 1293, 1875, 2121]
+# Evaluation
+evaluator = COCOEvaluator('kittival', cfg, False, output_dir='./output-{}'.format(conf) + combo)
+trainer.test(cfg, trainer.model, evaluators=[evaluator])
 
-        cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
-        predictor = DefaultPredictor(cfg)
-        
-        for img_idx in imagesToPredict:
-            filePath = dataset_val[img_idx]['file_name']
-            path, filename = os.path.split(filePath)
-            # Make prediction
-            im = cv2.imread(filePath)
-            outputs = predictor(im)
+print("Generating images with predictions...")
 
-            # Visualize the prediction in the image
-            v = Visualizer(
-                im[:, :, ::-1],
-                metadata=metadata,
-                scale=0.8,
-                instance_mode=ColorMode.IMAGE)
-            v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
+dataset_val = get_KITTIMOTS_dicts("val")
 
-            os.makedirs(PATH_RESULTS, exist_ok=True)
-            cv2.imwrite(PATH_RESULTS + filename, v.get_image()[:, :, ::-1])
+imagesToPredict = [97, 356, 527, 1293, 1875, 2121]
 
+cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
+predictor = DefaultPredictor(cfg)
 
-if __name__ == '__main__':
-    MaskCNN_MOTS().run(sys.argv)
+for img_idx in imagesToPredict:
+    filePath = dataset_val[img_idx]['file_name']
+    path, filename = os.path.split(filePath)
+    # Make prediction
+    im = cv2.imread(filePath)
+    outputs = predictor(im)
 
+    # Visualize the prediction in the image
+    v = Visualizer(
+        im[:, :, ::-1],
+        metadata=metadata,
+        scale=0.8,
+        instance_mode=ColorMode.IMAGE)
+    v = v.draw_instance_predictions(outputs["instances"].to("cpu"))
 
+    os.makedirs(PATH_RESULTS, exist_ok=True)
+    cv2.imwrite(PATH_RESULTS + filename, v.get_image()[:, :, ::-1])
