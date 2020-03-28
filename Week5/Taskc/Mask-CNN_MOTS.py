@@ -21,15 +21,15 @@ from KITTIMOTSLoader import get_KITTIMOTS_dicts
 import MaskConfiguration as mk
 
 iterations = [['lr1', 0.0025, 4, 'WarmupMultiStepLR',6000 ],
-              ['lr1', 0.0001, 4, 'WarmupMultiStepLR',6000 ]
-              #['lr1', 0.00025, 4, 'WarmupMultiStepLR',6000],
-              #['lr1', 0.0005, 4, 'WarmupMultiStepLR',6000],
-              #['batch1', 0.0025, 8, 'WarmupMultiStepLR',6000],
-              #['batch1', 0.0025, 16, 'WarmupMultiStepLR',6000],
-              #['scheduler1', 0.0025, 4, 'WarmupCosineLR',6000],
-              #['topktrain1', 0.0025, 4, 'WarmupMultiStepLR',9000],
-              #['topktrain2', 0.0025, 4, 'WarmupMultiStepLR',12000],
-              #['topktrain3', 0.0025, 4, 'WarmupMultiStepLR',15000]
+              ['lr2', 0.0001, 4, 'WarmupMultiStepLR',6000 ],
+              ['lr3', 0.00025, 4, 'WarmupMultiStepLR',6000],
+              ['lr4', 0.0005, 4, 'WarmupMultiStepLR',6000],
+              ['batch1', 0.0025, 8, 'WarmupMultiStepLR',6000],
+              ['batch2', 0.0025, 16, 'WarmupMultiStepLR',6000],
+              ['scheduler1', 0.0025, 4, 'WarmupCosineLR',6000],
+              ['topktrain1', 0.0025, 4, 'WarmupMultiStepLR',9000],
+              ['topktrain2', 0.0025, 4, 'WarmupMultiStepLR',12000],
+              ['topktrain3', 0.0025, 4, 'WarmupMultiStepLR',15000]
               ]
 
 inference = True
