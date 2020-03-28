@@ -19,10 +19,11 @@ file_dir = os.path.dirname(__file__)
 print(file_dir)
 sys.path.append(file_dir)
 
-from KITTIMOTSLoader import get_KITTIMOTS_dicts
+from MOTSChallengeLoader import get_MOTS_dicts
 import MaskConfiguration as mk
 
 inference = False
+
 class MaskCNN_MOTS(object):
     def run(self, argv):
 
@@ -51,19 +52,18 @@ class MaskCNN_MOTS(object):
         print("////////////////////////////////////////////////////////")
 
         for d in ["train", "val"]:
-            DatasetCatalog.register("fcnn-mots" + d, lambda d=d: get_KITTIMOTS_dicts(d))
-            MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=['Car','Pedestrian', 'DontCare'])
+            DatasetCatalog.register("fcnn-mots" + d, lambda d=d: get_MOTS_dicts(d))
+            MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=['Car','Pedestrian'])
 
         # Inference
         cfg = get_cfg()
         cfg.merge_from_file(configuration[0])
         metasata = MetadataCatalog.get(cfg.DATASETS.TRAIN[0])
-        cfg.DATASETS.TRAIN = ('fcnn-motstrain',)
-        cfg.DATASETS.TEST = ('fcnn-motsval',)
+        #cfg.DATASETS.TRAIN = ('fcnn-motstrain',)
+        cfg.DATASETS.TEST = ('fcnn-motstrain',)
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
         cfg.OUTPUT_DIR = PATH_RESULTS
         cfg.MODEL.WEIGHTS = checkpoint
-        cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3
 
         if(inference):
             predictor = DefaultPredictor(cfg)
@@ -89,8 +89,8 @@ class MaskCNN_MOTS(object):
 
         # Evaluation
         coco_to_kitti_dict = {2: 0, 0: 1,}
-        evaluator = COCOEvaluator('fcnn-motsval', cfg, False, output_dir='./output{}'.format(conf))
-        val_loader = build_detection_test_loader(cfg, 'fcnn-motsval')
+        evaluator = COCOEvaluator('fcnn-motstrain', cfg, False, output_dir='./output{}-{}/'.format(conf, check))
+        val_loader = build_detection_test_loader(cfg, 'fcnn-motstrain')
         inference_on_dataset(model, val_loader, evaluator)
         preds = evaluator._predictions
         for pred in preds:
