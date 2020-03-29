@@ -16,6 +16,7 @@ Possible parameters are:
 - CS
 - MOTS
 - KITTI
+
 To add the training data to the model
 ### Task C
 `python3 Mask-CNN_MOTS.py R50-C4/R50-DC5/R50-FPN/R101-C4/R101-DC5/R101-FPN/R50-FPN-CS`
