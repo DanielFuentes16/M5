@@ -10,14 +10,16 @@ import mask
 import pickle
 
 
-def get_MOTS_dicts(set_type):
+def get_MOTS_dicts(set_type, useCOCO=False):
     if set_type is not 'train' and set_type is not 'test' and set_type is not 'val' and set_type is not "full":
         raise Exception("Invalid set type")
 
+    pkl_name = "mots_full.pkl" if useCOCO is False else "mots_full_COCO.pkl"
+
     #Since the split is always the same, save the results to pickles
-    if set_type == "full" and os.path.exists("mots_full.pkl"):
+    if set_type == "full" and os.path.exists(pkl_name):
         print("Loading data from local pickle file")
-        data = pickle.load(open("mots_full.pkl", "rb"))
+        data = pickle.load(open(pkl_name, "rb"))
         return data
 
     image_path = '/home/mcv/datasets/MOTSChallenge/train/images'
@@ -51,9 +53,11 @@ def get_MOTS_dicts(set_type):
             if imageNum is int(col[0]):
                 catg = int(col[1]) // 1000
                 if catg is 1:
-                    catg = 0
-                elif catg is 2:
+                    catg = 0 if useCOCO is False else 2
+                    #catg = 0
                     catg = 1
+                elif catg is 2:
+                    catg = 1 if useCOCO is False else 0
                 else:
                     continue
                     catg = 2
@@ -80,7 +84,7 @@ def get_MOTS_dicts(set_type):
         dataset_dicts.append(record)
 
     if set_type == "full":
-        pickle.dump(dataset_dicts, open("mots_full.pkl", "wb"))
+        pickle.dump(dataset_dicts, open(pkl_name, "wb"))
         return dataset_dicts
 
     trainData, valData, _, _ = train_test_split(dataset_dicts, dataset_dicts, test_size=0.20, random_state=42)

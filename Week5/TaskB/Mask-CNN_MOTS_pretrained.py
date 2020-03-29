@@ -8,7 +8,7 @@ from tqdm import tqdm
 from detectron2.config import get_cfg
 from detectron2.data import DatasetCatalog
 from detectron2.data import MetadataCatalog
-from detectron2.engine import DefaultPredictor
+from detectron2.engine import DefaultPredictor, DefaultTrainer
 from detectron2.utils.visualizer import Visualizer, ColorMode
 from detectron2.utils.logger import setup_logger
 from detectron2.modeling import build_model
@@ -21,7 +21,7 @@ file_dir = os.path.dirname(__file__)
 print(file_dir)
 sys.path.append(file_dir)
 
-from MOTSChallengeLoader import get_MOTS_dicts
+from KITTIMOTSLoader import get_KITTIMOTS_dicts
 import MaskConfiguration as mk
 
 inference = False
@@ -63,18 +63,17 @@ class MaskCNN_MOTS(object):
             useCOCO = True
             classes = ['person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
 
-        for d in ["full"]:
-            DatasetCatalog.register("fcnn-mots" + d, lambda d=d: get_MOTS_dicts(d, useCOCO))
+        for d in ["val"]:
+            DatasetCatalog.register("fcnn-mots" + d, lambda d=d: get_KITTIMOTS_dicts(d, True))
             MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=classes)
         
         cfg = get_cfg()
         cfg.merge_from_file(configuration[0])
         metasata = MetadataCatalog.get(cfg.DATASETS.TRAIN[0] if useCOCO is True else "fcnn-motsfull")
-        cfg.DATASETS.TEST = ('fcnn-motsfull',)
+        cfg.DATASETS.TEST = ('fcnn-motsval',)
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
         cfg.OUTPUT_DIR = PATH_RESULTS
-        if len(argv) == 3:
-            cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
+        # cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
         cfg.MODEL.WEIGHTS = checkpoint
 
         if(inference):
@@ -100,9 +99,10 @@ class MaskCNN_MOTS(object):
         DetectionCheckpointer(model).load(cfg.MODEL.WEIGHTS)
 
         # Evaluation
+        #transform_dict = {2: 0, 0: 1,}
         transform_dict = {0: 1, 2: 0}
-        evaluator = COCOEvaluator('fcnn-motsfull', cfg, False, output_dir='./output{}-{}/'.format(conf, check))
-        val_loader = build_detection_test_loader(cfg, 'fcnn-motsfull')
+        evaluator = COCOEvaluator('fcnn-motsval', cfg, False, output_dir='./output{}-{}/'.format(conf, check))
+        val_loader = build_detection_test_loader(cfg, 'fcnn-motsval')
         inference_on_dataset(model, val_loader, evaluator)
 
 if __name__ == '__main__':
