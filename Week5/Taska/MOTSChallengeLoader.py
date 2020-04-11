@@ -25,6 +25,7 @@ def get_MOTS_dicts(set_type, useCOCO=False):
     image_path = '/home/mcv/datasets/MOTSChallenge/train/images'
     label_path = '/home/mcv/datasets/MOTSChallenge/train/instances_txt'
     image_files = glob.glob(image_path + '/*/*.jpg')
+    image_files = sorted(image_files)
 
     dataset_dicts = []
 
@@ -68,9 +69,17 @@ def get_MOTS_dicts(set_type, useCOCO=False):
                 bbox = mask.toBbox(rle)
                 maskk = coco.maskUtils.decode(rle)
                 contours, _ = cv2.findContours(maskk, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-                seg = [[int(i) for i in c.flatten()] for c in contours]
+                """seg = [[int(i) for i in c.flatten()] for c in contours]
                 seg = [s for s in seg if len(s) >= 6]
                 if not seg:
+                    continue"""
+                seg = []
+                for contour in contours:
+                    contour = contour.flatten().tolist()
+                    # segmentation.append(contour)
+                    if len(contour) > 4:
+                        seg.append(contour)
+                if len(seg) == 0:
                     continue
 
                 obj = {

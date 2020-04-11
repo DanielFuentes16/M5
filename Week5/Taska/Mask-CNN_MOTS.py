@@ -8,7 +8,7 @@ from tqdm import tqdm
 from detectron2.config import get_cfg
 from detectron2.data import DatasetCatalog
 from detectron2.data import MetadataCatalog
-from detectron2.engine import DefaultPredictor
+from detectron2.engine import DefaultPredictor, DefaultTrainer
 from detectron2.utils.visualizer import Visualizer, ColorMode
 from detectron2.utils.logger import setup_logger
 from detectron2.modeling import build_model
@@ -41,7 +41,7 @@ class MaskCNN_MOTS(object):
             checkpoint = mk.MaskConfiguration().get_Checkpoint(check)
 
         PATH_RESULTS = './Results-{}-{}/'.format(conf, check)
-        PATH_TRAIN = '/home/mcv/datasets/KITTI-MOTS/training/image_02/'
+        PATH_TRAIN = '/home/mcv/datasets/MOTSChallenge/train/images/'
         os.makedirs(PATH_RESULTS, exist_ok=True)
 
         print("////////////////////////////////////////////////////////")
@@ -71,19 +71,25 @@ class MaskCNN_MOTS(object):
         cfg.merge_from_file(configuration[0])
         metasata = MetadataCatalog.get(cfg.DATASETS.TRAIN[0] if useCOCO is True else "fcnn-motsfull")
         cfg.DATASETS.TEST = ('fcnn-motsfull',)
-        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
+        cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.7
         cfg.OUTPUT_DIR = PATH_RESULTS
         if len(argv) == 3:
             cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
         cfg.MODEL.WEIGHTS = checkpoint
 
+        inference = False
+
         if(inference):
             predictor = DefaultPredictor(cfg)
-            for filePath in glob.glob(PATH_TRAIN + '/*/*.png'):
-                path, filename = os.path.split(filePath)
-                print(filePath)
+            fileList = glob.glob(PATH_TRAIN + '/*/*.jpg')
+            fileList = sorted(fileList)
+            imList = [34, 251, 567, 1243]
+            for fileIdx in imList:
+                currImg = fileList[fileIdx]
+                path, filename = os.path.split(currImg)
+                print(currImg)
                 # Make prediction
-                im = cv2.imread(filePath)
+                im = cv2.imread(currImg)
                 outputs = predictor(im)
                 v = Visualizer(
                     im[:, :, ::-1],
@@ -94,6 +100,7 @@ class MaskCNN_MOTS(object):
 
                 os.makedirs(PATH_RESULTS, exist_ok=True)
                 cv2.imwrite(PATH_RESULTS + filename, v.get_image()[:, :, ::-1])
+            exit()
 
         print("Generating Predictions")
         model = build_model(cfg)
