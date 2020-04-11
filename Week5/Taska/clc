@@ -1,0 +1,21 @@
+#!/bin/bash
+output="/output"
+pkl="kittiMots.pkl"
+resultFiles="joba.sh_grupo09_"
+echo "Start Cleaning"
+
+if [ -d "output" ] ; then
+    rm -r output
+    echo "deleted output"
+fi
+echo "25%"
+if [ -f "kittiMots.pkl" ] ; then
+    rm -r -f $pkl
+    echo "deleted pkl"
+fi
+echo "50%"
+find . -type f -iname "job*.sh.*"
+echo "75%"
+find . -type f -iname "job*.sh.*" -delete
+echo "100%"
+echo "End Cleaning"

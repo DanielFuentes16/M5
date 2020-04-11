@@ -2,19 +2,21 @@ import os
 import glob
 import cv2
 from tqdm import tqdm
-import numpy as np
 from pycocotools import coco
-from sklearn.model_selection import train_test_split
 from detectron2.structures import BoxMode
 import mask
 import pickle
 
 
-def get_KITTIMOTS_dicts(set_type):
+def get_KITTIMOTS_dicts(set_type, useCOCO=False):
     if set_type is not 'train' and set_type is not 'test' and set_type is not 'val':
         raise Exception("Invalid set type")
 
-    pkl_name = 'kittiMots_train.pkl' if set_type is "train" else 'kittiMots_val.pkl'
+    pkl_name = 'kittiMots_train' if set_type is "train" else 'kittiMots_val'
+    if useCOCO is True:
+        pkl_name += "_COCO"
+    pkl_name += ".pkl"
+    
 
     if os.path.exists(pkl_name):
         print("Loading data from local pickle file")
@@ -63,9 +65,9 @@ def get_KITTIMOTS_dicts(set_type):
             if imageNum is int(col[0]):
                 catg = int(col[1]) // 1000
                 if catg is 1:
-                    catg = 0
+                    catg = 0 if useCOCO is False else 2
                 elif catg is 2:
-                    catg = 1
+                    catg = 1 if useCOCO is False else 0
                 else:
                     continue
                     catg = 2

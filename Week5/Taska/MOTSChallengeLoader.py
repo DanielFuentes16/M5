@@ -10,31 +10,21 @@ import mask
 import pickle
 
 
-def get_KITTIMOTS_dicts(set_type):
-    if set_type is not 'train' and set_type is not 'test' and set_type is not 'val':
+def get_MOTS_dicts(set_type, useCOCO=False):
+    if set_type is not 'train' and set_type is not 'test' and set_type is not 'val' and set_type is not "full":
         raise Exception("Invalid set type")
 
-    pkl_name = 'kittiMots_train.pkl' if set_type is "train" else 'kittiMots_val.pkl'
+    pkl_name = "mots_full.pkl" if useCOCO is False else "mots_full_COCO.pkl"
 
-    if os.path.exists(pkl_name):
+    #Since the split is always the same, save the results to pickles
+    if set_type == "full" and os.path.exists(pkl_name):
         print("Loading data from local pickle file")
         data = pickle.load(open(pkl_name, "rb"))
         return data
 
-    image_path = '/home/mcv/datasets/KITTI-MOTS/training/image_02'
-    label_path = '/home/mcv/datasets/KITTI-MOTS/instances_txt'
-
-    train_seqs = ["0000","0001","0003","0004","0005","0009","0011","0012","0015","0017","0019","0020"]
-    val_seqs = ["0002","0006","0007","0008","0010","0013","0014","0016","0018"]
-
-    seqs = train_seqs if set_type is "train" else val_seqs
-
-    image_files = []
-
-    for seq in seqs:
-        path_regex = image_path + '/' + seq + '/*.png'
-        for path in glob.glob(path_regex):
-            image_files.append(path)
+    image_path = '/home/mcv/datasets/MOTSChallenge/train/images'
+    label_path = '/home/mcv/datasets/MOTSChallenge/train/instances_txt'
+    image_files = glob.glob(image_path + '/*/*.jpg')
 
     dataset_dicts = []
 
@@ -63,9 +53,11 @@ def get_KITTIMOTS_dicts(set_type):
             if imageNum is int(col[0]):
                 catg = int(col[1]) // 1000
                 if catg is 1:
-                    catg = 0
-                elif catg is 2:
+                    catg = 0 if useCOCO is False else 2
+                    #catg = 0
                     catg = 1
+                elif catg is 2:
+                    catg = 1 if useCOCO is False else 0
                 else:
                     continue
                     catg = 2
@@ -91,5 +83,10 @@ def get_KITTIMOTS_dicts(set_type):
         record["annotations"] = objs
         dataset_dicts.append(record)
 
-    pickle.dump(dataset_dicts, open(pkl_name, "wb"))
-    return dataset_dicts
+    if set_type == "full":
+        pickle.dump(dataset_dicts, open(pkl_name, "wb"))
+        return dataset_dicts
+
+    trainData, valData, _, _ = train_test_split(dataset_dicts, dataset_dicts, test_size=0.20, random_state=42)
+    pickle.dump([trainData, valData], open("kittiMots.pkl", "wb" ))
+    return trainData if set_type is 'train' else valData

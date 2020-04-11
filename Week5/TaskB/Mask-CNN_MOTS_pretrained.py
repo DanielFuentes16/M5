@@ -2,11 +2,13 @@ import os
 import sys
 import glob
 import cv2
+import pickle
+from tqdm import tqdm
 
 from detectron2.config import get_cfg
 from detectron2.data import DatasetCatalog
 from detectron2.data import MetadataCatalog
-from detectron2.engine import DefaultPredictor
+from detectron2.engine import DefaultPredictor, DefaultTrainer
 from detectron2.utils.visualizer import Visualizer, ColorMode
 from detectron2.utils.logger import setup_logger
 from detectron2.modeling import build_model
@@ -23,6 +25,7 @@ from KITTIMOTSLoader import get_KITTIMOTS_dicts
 import MaskConfiguration as mk
 
 inference = False
+
 class MaskCNN_MOTS(object):
     def run(self, argv):
 
@@ -31,8 +34,13 @@ class MaskCNN_MOTS(object):
         else:
             conf = argv[1]
             configuration = mk.MaskConfiguration().get_Configuration(conf)
+            check = '16'
+            checkpoint = configuration[1]
+        if len(argv) == 3:
+            check = argv[2]
+            checkpoint = mk.MaskConfiguration().get_Checkpoint(check)
 
-        PATH_RESULTS = './Results-{}/'.format(conf)
+        PATH_RESULTS = './Results-{}-{}/'.format(conf, check)
         PATH_TRAIN = '/home/mcv/datasets/KITTI-MOTS/training/image_02/'
         os.makedirs(PATH_RESULTS, exist_ok=True)
 
@@ -45,19 +53,28 @@ class MaskCNN_MOTS(object):
         print("////////////////////////////////////////////////////////")
         print("////////////////////////////////////////////////////////")
 
-        for d in ["train", "val"]:
-            DatasetCatalog.register("fcnn-mots" + d, lambda d=d: get_KITTIMOTS_dicts(d))
-            MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=['Car', 'DontCare','Pedestrian'])
+        #data = pickle.load(open("preds.pkl", "rb"))
+        #data_pre = pickle.load(open("preds_pre.pkl", "rb"))
 
-        # Inference
+        if len(sys.argv) == 3:
+            useCOCO = False
+            classes = ['Car', 'Pedestrian']
+        else:
+            useCOCO = True
+            classes = ['person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle']
+
+        for d in ["val"]:
+            DatasetCatalog.register("fcnn-mots" + d, lambda d=d: get_KITTIMOTS_dicts(d, True))
+            MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=classes)
+        
         cfg = get_cfg()
         cfg.merge_from_file(configuration[0])
-        metasata = MetadataCatalog.get(cfg.DATASETS.TRAIN[0])
-        cfg.DATASETS.TRAIN = ('fcnn-motstrain',)
+        metasata = MetadataCatalog.get(cfg.DATASETS.TRAIN[0] if useCOCO is True else "fcnn-motsfull")
         cfg.DATASETS.TEST = ('fcnn-motsval',)
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
         cfg.OUTPUT_DIR = PATH_RESULTS
-        cfg.MODEL.WEIGHTS = configuration[1]
+        # cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
+        cfg.MODEL.WEIGHTS = checkpoint
 
         if(inference):
             predictor = DefaultPredictor(cfg)
@@ -82,17 +99,11 @@ class MaskCNN_MOTS(object):
         DetectionCheckpointer(model).load(cfg.MODEL.WEIGHTS)
 
         # Evaluation
-        coco_to_kitti_dict = {2: 0, 0: 1,}
-        evaluator = COCOEvaluator('fcnn-motsval', cfg, False, output_dir='./output{}'.format(conf))
+        #transform_dict = {2: 0, 0: 1,}
+        transform_dict = {0: 1, 2: 0}
+        evaluator = COCOEvaluator('fcnn-motsval', cfg, False, output_dir='./output{}-{}/'.format(conf, check))
         val_loader = build_detection_test_loader(cfg, 'fcnn-motsval')
         inference_on_dataset(model, val_loader, evaluator)
-        preds = evaluator._predictions
-        for pred in preds:
-            pred['instances'] = [i for i in pred['instances'] if i['category_id'] in coco_to_kitti_dict.keys()]
-            for instance in pred['instances']:
-                instance['category_id'] = coco_to_kitti_dict[instance['category_id']]
-        evaluator._predictions = preds
-        evaluator.evaluate()
 
 if __name__ == '__main__':
     MaskCNN_MOTS().run(sys.argv)

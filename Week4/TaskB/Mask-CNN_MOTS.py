@@ -49,7 +49,7 @@ class MaskCNN_MOTS(object):
         print("////////////////////////////////////////////////////////")
         print("////////////////////////////////////////////////////////")
         dataset = get_KITTIMOTS_dicts("train")
-        
+
         for d in ["train", "val"]:
             DatasetCatalog.register("fcnn-mots" + d, lambda d=d: get_KITTIMOTS_dicts(d))
             MetadataCatalog.get("fcnn-mots" + d).set(thing_classes=['Car', 'Pedestrian', 'DontCare'])
@@ -57,7 +57,7 @@ class MaskCNN_MOTS(object):
         cfg = get_cfg()
 
         cfg.merge_from_file(configuration[0])
-        metadata =  MetadataCatalog.get("fcnn-motstrain")
+        metadata = MetadataCatalog.get("fcnn-motstrain")
         cfg.DATASETS.TRAIN = ('fcnn-motstrain',)
         cfg.DATASETS.TEST = ('fcnn-motsval',)
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model
@@ -74,7 +74,7 @@ class MaskCNN_MOTS(object):
         itersDivider = 1
         cfg.SOLVER.MAX_ITER = itersMultiplier * itersToFullDataset // itersDivider
         cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 256
-        cfg.MODEL.ROI_HEADS.NUM_CLASSES = 3
+        cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
 
         os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
         trainer = DefaultTrainer(cfg)
@@ -88,7 +88,7 @@ class MaskCNN_MOTS(object):
         cfg.DATASETS.TEST = ('fcnn-motsval',)
 
         # Evaluation
-        evaluator = COCOEvaluator('fcnn-motsval', cfg, False, output_dir='./output{}'.format(conf))
+        evaluator = COCOEvaluator('fcnn-motsval', cfg, False, output_dir='./output-{}'.format(conf))
         trainer.test(cfg, trainer.model, evaluators=[evaluator])
 
         print("Generating images with predictions...")
@@ -99,7 +99,7 @@ class MaskCNN_MOTS(object):
 
         cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
         predictor = DefaultPredictor(cfg)
-        
+
         for img_idx in imagesToPredict:
             filePath = dataset_val[img_idx]['file_name']
             path, filename = os.path.split(filePath)
@@ -117,7 +117,6 @@ class MaskCNN_MOTS(object):
 
             os.makedirs(PATH_RESULTS, exist_ok=True)
             cv2.imwrite(PATH_RESULTS + filename, v.get_image()[:, :, ::-1])
-
 
 if __name__ == '__main__':
     MaskCNN_MOTS().run(sys.argv)

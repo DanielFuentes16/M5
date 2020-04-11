@@ -2,9 +2,7 @@ import os
 import glob
 import cv2
 from tqdm import tqdm
-import numpy as np
 from pycocotools import coco
-from sklearn.model_selection import train_test_split
 from detectron2.structures import BoxMode
 import mask
 import pickle
