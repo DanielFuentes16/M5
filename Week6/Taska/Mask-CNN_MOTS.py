@@ -23,7 +23,7 @@ from CustomTrainer import CustomTrainer
 
 
 
-iterations = [['lr1', 0.0025, 4, 'WarmupMultiStepLR',6000 ]
+iterations = [['lr1', 0.0025, 8, 'WarmupMultiStepLR',3000 ]
               #['lr2', 0.0001, 4, 'WarmupMultiStepLR',6000 ],
               #['lr3', 0.00025, 4, 'WarmupMultiStepLR',6000],
               #['lr4', 0.0005, 4, 'WarmupMultiStepLR',6000],
@@ -34,8 +34,37 @@ iterations = [['lr1', 0.0025, 4, 'WarmupMultiStepLR',6000 ]
               #['topktrain2', 0.0025, 4, 'WarmupMultiStepLR',12000],
               #['topktrain3', 0.0025, 4, 'WarmupMultiStepLR',15000]
               ]
-data_it = ["NoDA", "DACrop","DA2", "ALLDA"]
+data_it = ["NoDA",
+           "DACrop",
+           "DAFlip",
+           "ALLDA"
+           ]
 inference = True
+methodsCrop = {
+         'crop': {
+             'type': 'relative',
+             'size': [0.9, 0.9]
+         }
+     }
+methodsFlip = {
+         'flip': {
+             'prob': 0.5,
+             'horizontal': True,
+             'vertical': False
+         }
+     }
+methodsAll = {
+         'crop': {
+             'type': 'relative',
+             'size': [0.9, 0.9]
+         },
+         'flip': {
+             'prob': 0.5,
+             'horizontal': True,
+             'vertical': False
+         }
+     }
+methodsNone = {}
 class MaskCNN_MOTS(object):
     def run(self, argv):
 
@@ -68,8 +97,9 @@ class MaskCNN_MOTS(object):
             print('batch {}'.format(iterations[0][2]))
             print('scheduler {}'.format(iterations[0][3]))
             print('top k train {}'.format(iterations[0][0]))
+            print('Data augmentation {}'.format(iter))
 
-            PATH_RESULTS = './Results-{}-{}/'.format(conf, iter[0][0])
+            PATH_RESULTS = './Results-{}-{}/'.format(conf, iter)
 
             PATH_TRAIN = '/home/mcv/datasets/KITTI-MOTS/training/image_02/'
             PATH_TEST = '/home/mcv/datasets/KITTI/data_object_image_2/testing/image_2'
@@ -102,6 +132,15 @@ class MaskCNN_MOTS(object):
             cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 256
             cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
 
+            if iter == "NoDA":
+                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(da=methodsNone)
+            if iter == "DACrop":
+                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(da=methodsCrop)
+            if iter == "DAFlip":
+                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(da=methodsFlip)
+            if iter == "ALLDA":
+                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(da=methodsAll)
+
             os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
             trainer = CustomTrainer(cfg)
             trainer.resume_or_load(resume=False)
@@ -118,7 +157,7 @@ class MaskCNN_MOTS(object):
             cfg.DATASETS.TEST = ('fcnn-motsval',)
 
             # Evaluation
-            evaluator = COCOEvaluator('fcnn-motsval', cfg, False, output_dir='./output-{}-{}'.format(conf, iter[0]))
+            evaluator = COCOEvaluator('fcnn-motsval', cfg, False, output_dir='./output-{}-{}'.format(conf, iter))
             trainer.test(cfg, trainer.model, evaluators=[evaluator])
 
             print("Generating images with predictions...")

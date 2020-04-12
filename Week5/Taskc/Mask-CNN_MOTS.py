@@ -24,12 +24,12 @@ iterations = [['lr1', 0.0025, 4, 'WarmupMultiStepLR',6000 ],
               ['lr2', 0.0001, 4, 'WarmupMultiStepLR',6000 ],
               ['lr3', 0.00025, 4, 'WarmupMultiStepLR',6000],
               ['lr4', 0.0005, 4, 'WarmupMultiStepLR',6000],
-              ['batch1', 0.0025, 8, 'WarmupMultiStepLR',6000],
-              ['batch2', 0.0025, 16, 'WarmupMultiStepLR',6000],
-              ['scheduler1', 0.0025, 4, 'WarmupCosineLR',6000],
-              ['topktrain1', 0.0025, 4, 'WarmupMultiStepLR',9000],
-              ['topktrain2', 0.0025, 4, 'WarmupMultiStepLR',12000],
-              ['topktrain3', 0.0025, 4, 'WarmupMultiStepLR',15000]
+              ['batch1', 0.0025, 8, 'WarmupMultiStepLR',6000]
+              #['batch2', 0.0025, 16, 'WarmupMultiStepLR',6000],
+              #['scheduler1', 0.0025, 4, 'WarmupCosineLR',6000],
+              #['topktrain1', 0.0025, 4, 'WarmupMultiStepLR',9000],
+              #['topktrain2', 0.0025, 4, 'WarmupMultiStepLR',12000],
+              #['topktrain3', 0.0025, 4, 'WarmupMultiStepLR',15000]
               ]
 
 inference = True
@@ -111,7 +111,7 @@ class MaskCNN_MOTS(object):
             cfg.MODEL.WEIGHTS = os.path.join(cfg.OUTPUT_DIR, "model_final.pth")
             cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5   # set the testing threshold for this model
 
-            # Set training data-set path
+            # Set training data-set pathCNN
             cfg.DATASETS.TEST = ('fcnn-motsval',)
 
             # Evaluation
