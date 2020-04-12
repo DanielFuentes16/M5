@@ -133,13 +133,13 @@ class MaskCNN_MOTS(object):
             cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
 
             if iter == "NoDA":
-                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(da=methodsNone)
+                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(methods=methodsNone)
             if iter == "DACrop":
-                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(da=methodsCrop)
+                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(methods=methodsCrop)
             if iter == "DAFlip":
-                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(da=methodsFlip)
+                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(methods=methodsFlip)
             if iter == "ALLDA":
-                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(da=methodsAll)
+                MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(methods=methodsAll)
 
             os.makedirs(cfg.OUTPUT_DIR, exist_ok=True)
             trainer = CustomTrainer(cfg)
