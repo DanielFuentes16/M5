@@ -4,12 +4,13 @@ Week 5: Introduction to Object Detection
 ### Marc marc.oros@e-campus.uab.cat
 ### Daniel Fuentes daanyfuentes@gmail.com
 ### [Overleaf Report](https://www.overleaf.com/read/djsbfhpnqrqy "Ovearleaf")
+### [Reduced Overleaf Report](https://www.overleaf.com/read/zxfqkmdjxwbm "Ovearleaf")
 
 ## To run the code
-To run each task run the scripts located in the Week4/TaskX folder as follows:
+To run each task run the scripts located in the Week6/TaskX folder as follows:
 
 ### Task A
-`python3 Mask-CNN_MOTS.py R50-FPN/R50-FPN-CS City/Kitti/""`
+`python3 Mask-CNN_MOTS.py R50-FPN
 ### Task B
 `python3 Mask-CNN_MOTS.py "Additional parameters"`
 Possible parameters are:
