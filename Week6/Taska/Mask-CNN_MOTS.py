@@ -23,7 +23,7 @@ from CustomTrainer import CustomTrainer
 
 
 
-iterations = [['lr1', 0.0025, 8, 'WarmupMultiStepLR',3000 ]
+iterations = [['lr1', 0.0025, 4, 'WarmupMultiStepLR',6000 ]
               #['lr2', 0.0001, 4, 'WarmupMultiStepLR',6000 ],
               #['lr3', 0.00025, 4, 'WarmupMultiStepLR',6000],
               #['lr4', 0.0005, 4, 'WarmupMultiStepLR',6000],
@@ -34,9 +34,9 @@ iterations = [['lr1', 0.0025, 8, 'WarmupMultiStepLR',3000 ]
               #['topktrain2', 0.0025, 4, 'WarmupMultiStepLR',12000],
               #['topktrain3', 0.0025, 4, 'WarmupMultiStepLR',15000]
               ]
-data_it = ["NoDA",
-           "DACrop",
-           "DAFlip",
+data_it = [
+           #"DACrop"#,
+           #"DAFlip"#,
            "ALLDA"
            ]
 inference = True
@@ -128,11 +128,11 @@ class MaskCNN_MOTS(object):
             itersToFullDataset = len(dataset) // cfg.SOLVER.IMS_PER_BATCH + 1
             itersMultiplier = 10
             itersDivider = 1
-            cfg.SOLVER.MAX_ITER = itersMultiplier * itersToFullDataset // itersDivider
+            cfg.SOLVER.MAX_ITER = 1000
             cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 256
             cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
 
-            if iter == "NoDA":
+            if iter == "NoDA2":
                 MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(methods=methodsNone)
             if iter == "DACrop":
                 MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(methods=methodsCrop)
