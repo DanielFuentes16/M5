@@ -35,8 +35,9 @@ iterations = [['lr1', 0.0025, 4, 'WarmupMultiStepLR',6000 ]
               #['topktrain3', 0.0025, 4, 'WarmupMultiStepLR',15000]
               ]
 data_it = [
-           #"DACrop"#,
-           #"DAFlip"#,
+            "NoDA",
+            "DAFlip",
+           "DACrop",
            "ALLDA"
            ]
 inference = True
@@ -132,7 +133,7 @@ class MaskCNN_MOTS(object):
             cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 256
             cfg.MODEL.ROI_HEADS.NUM_CLASSES = 2
 
-            if iter == "NoDA2":
+            if iter == "NoDA":
                 MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(methods=methodsNone)
             if iter == "DACrop":
                 MetadataCatalog.get(cfg.DATASETS.TRAIN[0]).set(methods=methodsCrop)
