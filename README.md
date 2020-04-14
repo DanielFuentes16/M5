@@ -6,6 +6,8 @@ Week 5: Introduction to Object Detection
 ### [Overleaf Report](https://www.overleaf.com/read/djsbfhpnqrqy "Ovearleaf")
 ### [Reduced Overleaf Report](https://www.overleaf.com/read/zxfqkmdjxwbm "Ovearleaf")
 
+### [Team 3 Final Presentation](https://drive.google.com/file/d/16BY1adIj2M8w-ts9S3_6PGbf2ruWarIF/view?usp=sharing"Team3 Presentation")
+
 ## To run the code
 To run each task run the scripts located in the Week6/TaskX folder as follows:
 
