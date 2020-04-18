@@ -48,12 +48,13 @@ bySeqs = True if '-s' in sys.argv else False
 conf = "R50-FPN" # "R50-FPN-CS"
 
 if bySeqs is True:
-    ration = int(ratio)
+    ratio = int(ratio)
     experiment = "exp4-{}-seqs".format(ratio)
 else:
     experiment = "exp4-{}".format(int(ratio*100))
 
 print("Base model: " + str(conf))
+print("Experiment: " + experiment)
 
 configuration = mk.MaskConfiguration().get_Configuration(conf)
 PATH_RESULTS = './Results-{}-{}/'.format(conf, experiment)
@@ -97,8 +98,8 @@ MetadataCatalog.get("kitti-test").set(thing_classes=['Car', 'Pedestrian'])
 cfg = get_cfg()
 
 cfg.merge_from_file(configuration[0])
-metadata = MetadataCatalog.get("kitti-train")
-cfg.DATASETS.TRAIN = ("kitti-train",)
+metadata = MetadataCatalog.get("kitti-train1")
+cfg.DATASETS.TRAIN = ("kitti-train1", "kitti-train2")
 cfg.DATASETS.TEST = ('kitti-val',)
 cfg.TEST.EVAL_PERIOD = 1000
 cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5  # set threshold for this model

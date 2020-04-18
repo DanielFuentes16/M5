@@ -14,7 +14,7 @@ def get_KITTIMOTS_dicts(seqs, useCache=True, ratio=1.0, bySeqs=False):
 
     pkl_name = hashlib.md5(''.join(seqs).encode()).hexdigest() + '.pkl'
 
-    if ratio < 1.0:
+    if ratio < 1.0 or bySeqs is True:
         useCache = False
 
     if useCache is True and os.path.exists(pkl_name):
@@ -30,14 +30,15 @@ def get_KITTIMOTS_dicts(seqs, useCache=True, ratio=1.0, bySeqs=False):
 
     dataset_dicts = []
 
+    if bySeqs is True:
+        limit = -1 * int(ratio)
+        seqs = seqs[0:limit]
+
     i=0 
     for seq in seqs:
         path_regex = image_path + '/' + seq + '/*.png'
         imgPaths = glob.glob(path_regex)
         imgPaths = sorted(imgPaths)
-        if bySeqs is True:
-            nImages = int(len(imgPaths) * ratio)
-            imgPaths = imgPaths[0:nImages]
         for imageFile in tqdm(imgPaths):
             record = {}
             record["file_name"] = imageFile
