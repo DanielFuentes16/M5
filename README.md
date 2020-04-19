@@ -4,7 +4,7 @@ Week 5: Introduction to Object Detection
 ### Marc marc.oros@e-campus.uab.cat
 ### Daniel Fuentes daanyfuentes@gmail.com
 ### [Overleaf Report](https://www.overleaf.com/read/djsbfhpnqrqy "Overleaf")
-### [Reduced Overleaf Report](https://www.overleaf.com/read/zxfqkmdjxwbm "Overleaf")
+### [Reduced Overleaf Report in CVPR format](https://www.overleaf.com/read/zxfqkmdjxwbm "Overleaf")
 
 ### [Team 3 Final Presentation](https://drive.google.com/file/d/16BY1adIj2M8w-ts9S3_6PGbf2ruWarIF/view?usp=sharing "Team3 Presentation")
 
