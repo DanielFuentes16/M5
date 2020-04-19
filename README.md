@@ -14,7 +14,8 @@ To run each task run the scripts located in the Week6/TaskX folder as follows:
 
 ### Task A
 `python3 Mask-CNN_MOTS.py R50-FPN
-If only is necessary to ejecute concrete data augmentation is necesary to change data_it in the Mask-CNN_MOTS.py
+<pre><code>If only is necessary to ejecute concrete data augmentation is necesary to change data_it in the Mask-CNN_MOTS.py</code></pre>
+
 ### Task B
 To run the three configurations for experiment 1 run:
 <pre><code>python3 Experiment1.py
